@@ -1,7 +1,4 @@
-ESX = nil
 local call_index = 0
-
-TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
 RegisterServerEvent("mdt:hotKeyOpen")
 AddEventHandler("mdt:hotKeyOpen", function()
@@ -47,7 +44,7 @@ RegisterServerEvent("mdt:performOffenderSearch")
 AddEventHandler("mdt:performOffenderSearch", function(query)
 	local usource = source
 	local matches = {}
-	MySQL.Async.fetchAll("SELECT * FROM `characters` WHERE LOWER(`firstname`) LIKE @query OR LOWER(`lastname`) LIKE @query OR CONCAT(LOWER(`firstname`), ' ', LOWER(`lastname`)) LIKE @query", {
+	MySQL.Async.fetchAll("SELECT * FROM `users` WHERE LOWER(`firstname`) LIKE @query OR LOWER(`lastname`) LIKE @query OR CONCAT(LOWER(`firstname`), ' ', LOWER(`lastname`)) LIKE @query", {
 		['@query'] = string.lower('%'..query..'%') -- % wildcard, needed to search for all alike results
 	}, function(result)
 
@@ -129,7 +126,7 @@ RegisterServerEvent("mdt:getOffenderDetailsById")
 AddEventHandler("mdt:getOffenderDetailsById", function(char_id)
 	local usource = source
 
-	local result = MySQL.Sync.fetchAll('SELECT * FROM `characters` WHERE `id` = @id', {
+	local result = MySQL.Sync.fetchAll('SELECT * FROM `users` WHERE `id` = @id', {
 		['@id'] = char_id
 	})
 	local offender = result[1]
@@ -381,7 +378,7 @@ end)
 RegisterServerEvent("mdt:getVehicle")
 AddEventHandler("mdt:getVehicle", function(vehicle)
 	local usource = source
-	local result = MySQL.Sync.fetchAll("SELECT * FROM `characters` WHERE `identifier` = @query", {
+	local result = MySQL.Sync.fetchAll("SELECT * FROM `users` WHERE `identifier` = @query", {
 		['@query'] = vehicle.owner
 	})
 	if result[1] then
@@ -577,38 +574,12 @@ AddEventHandler("mdt:saveVehicleChanges", function(data)
 end)
 
 function GetLicenses(identifier, cb)
-	MySQL.Async.fetchAll('SELECT * FROM user_licenses WHERE owner = @owner', {
-		['@owner'] = identifier
-	}, function(result)
-		local licenses   = {}
-		local asyncTasks = {}
-
-		for i=1, #result, 1 do
-
-			local scope = function(type)
-				table.insert(asyncTasks, function(cb)
-					MySQL.Async.fetchAll('SELECT * FROM licenses WHERE type = @type', {
-						['@type'] = type
-					}, function(result2)
-						table.insert(licenses, {
-							type  = type,
-							label = result2[1].label
-						})
-
-						cb()
-					end)
-				end)
-			end
-
-			scope(result[i].type)
-
+	MySQL.query('SELECT user_licenses.type, licenses.label FROM user_licenses LEFT JOIN licenses ON user_licenses.type = licenses.type WHERE owner = ?', {identifier},
+	function(result)
+		print(identifier)
+		if cb then
+			cb(result)
 		end
-
-		Async.parallel(asyncTasks, function(results)
-			if #licenses == 0 then licenses = false end
-			cb(licenses)
-		end)
-
 	end)
 end
 

@@ -1,6 +1,6 @@
 -- Made by distritic
 -- Do not sell, redistribute or claim this code as your own without my permission, thank you. <3
-fx_version 'adamant'
+fx_version 'cerulean'
 game 'gta5'
 
 
@@ -17,8 +17,9 @@ files {
     "ui/mugshot.png"
 }
 
+shared_script '@es_extended/imports.lua'
+
 server_scripts {
-    '@async/async.lua',
     '@mysql-async/lib/MySQL.lua',
     "sv_mdt.lua",
     "sv_vehcolors.lua"

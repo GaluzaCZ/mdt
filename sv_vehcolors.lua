@@ -163,7 +163,7 @@ colors = {
 }
 
 types = {
-    ['car'] = 'Automobile',
-    ['boat'] = 'Vessel',
+    ['car'] = 'Car',
+    ['boat'] = 'Boat',
     ['aircraft'] = 'Aircraft'
 }
