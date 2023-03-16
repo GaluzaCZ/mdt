@@ -1,9 +1,32 @@
 local call_index = 0
 
+ESX.RegisterServerCallback('mdt:getData', function(source, cb, plate)
+	local xPlayer = ESX.GetPlayerFromId(source)
+	if xPlayer.job.name ~= 'police' then return cb() --[[ print("Someone just call the callback 'mdt:getData' without job 'polcie' source: "..source) ]] end
+	local officer = xPlayer.getName()
+	local reports = GetReports()
+	local warrants = GetWarrants()
+
+	if plate then
+		local vehicles = SearchVehicle(plate)
+		return cb(reports, warrants, officer, xPlayer.job.name, vehicles)
+	end
+
+	cb(reports, warrants, officer, xPlayer.job.name)
+end)
+ESX.RegisterServerCallback('mdt:getFineTypes', function(source, cb)
+	local xPlayer = ESX.GetPlayerFromId(source)
+	if xPlayer.job.name ~= 'police' then return cb() --[[ print("Someone just call the callback 'mdt:getFineTypes' without job 'polcie' source: "..source) ]] end
+	local officer = xPlayer.getName()
+	local fine_types = GetFineTypes()
+
+	cb(fine_types, officer)
+end)
+
 RegisterServerEvent("mdt:hotKeyOpen")
 AddEventHandler("mdt:hotKeyOpen", function()
 	local usource = source
-    local xPlayer = ESX.GetPlayerFromId(source)
+    local xPlayer = ESX.GetPlayerFromId(usource)
     if xPlayer.job.name == 'police' then
     	MySQL.Async.fetchAll("SELECT * FROM (SELECT * FROM `mdt_reports` ORDER BY `id` DESC LIMIT 3) sub ORDER BY `id` DESC", {}, function(reports)
     		for r = 1, #reports do
@@ -21,7 +44,6 @@ AddEventHandler("mdt:hotKeyOpen", function()
     	end)
     end
 end)
-
 RegisterServerEvent("mdt:getOffensesAndOfficer")
 AddEventHandler("mdt:getOffensesAndOfficer", function()
 	local usource = source
@@ -576,7 +598,6 @@ end)
 function GetLicenses(identifier, cb)
 	MySQL.query('SELECT user_licenses.type, licenses.label FROM user_licenses LEFT JOIN licenses ON user_licenses.type = licenses.type WHERE owner = ?', {identifier},
 	function(result)
-		print(identifier)
 		if cb then
 			cb(result)
 		end
@@ -587,41 +608,5 @@ function GetCharacterName(source)
 	local xPlayer = ESX.GetPlayerFromId(source)
 	if xPlayer then
 		return xPlayer.getName()
-		
-	--[[	-- If the wrong name displays, remove `return xPlayer.getName()` and uncomment this code block
-		local identifier = xPlayer.getIdentifier()
-		local result = MySQL.Sync.fetchAll('SELECT firstname, lastname FROM `users` WHERE identifier = @identifier', {
-		['@identifier'] = identifier
-		})
-
-		if result[1] and result[1].firstname and result[1].lastname then
-			return ('%s %s'):format(result[1].firstname, result[1].lastname)
-		end
-	]]
 	end
-end
-
-function tprint (tbl, indent)
-  if not indent then indent = 0 end
-  local toprint = string.rep(" ", indent) .. "{\r\n"
-  indent = indent + 2 
-  for k, v in pairs(tbl) do
-    toprint = toprint .. string.rep(" ", indent)
-    if (type(k) == "number") then
-      toprint = toprint .. "[" .. k .. "] = "
-    elseif (type(k) == "string") then
-      toprint = toprint  .. k ..  "= "   
-    end
-    if (type(v) == "number") then
-      toprint = toprint .. v .. ",\r\n"
-    elseif (type(v) == "string") then
-      toprint = toprint .. "\"" .. v .. "\",\r\n"
-    elseif (type(v) == "table") then
-      toprint = toprint .. tprint(v, indent + 2) .. ",\r\n"
-    else
-      toprint = toprint .. "\"" .. tostring(v) .. "\",\r\n"
-    end
-  end
-  toprint = toprint .. string.rep(" ", indent-2) .. "}"
-  return toprint
 end

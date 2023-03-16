@@ -21,8 +21,12 @@ shared_script '@es_extended/imports.lua'
 
 server_scripts {
     '@mysql-async/lib/MySQL.lua',
+    'server/*.lua',
     "sv_mdt.lua",
     "sv_vehcolors.lua"
 }
 
-client_script "cl_mdt.lua"
+client_scripts {
+    'client/*.lua',
+    "cl_mdt.lua"
+}
